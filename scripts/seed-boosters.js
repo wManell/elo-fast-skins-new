@@ -1,8 +1,18 @@
 import { createClient } from '@supabase/supabase-js'
 import { v4 as uuidv4 } from 'uuid'
+import * as dotenv from 'dotenv'
 
-const supabaseUrl = 'https://iiabbhzcpgxvdidwrzdx.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpYWJiaHpjcGd4dmRpZHdyemR4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDc5ODc1MCwiZXhwIjoyMDkwMzc0NzUwfQ.2cbG4uEr3BTrEgGA7at7-JcMBagehmdYtisI_jyEXkE'
+// Carrega variáveis de ambiente do .env.local
+dotenv.config({ path: '.env.local' })
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Erro: Variáveis de ambiente não encontradas!')
+  console.error('Certifique-se de ter o arquivo .env.local configurado')
+  process.exit(1)
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 

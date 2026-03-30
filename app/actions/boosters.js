@@ -24,15 +24,31 @@ export async function getActiveBoosters() {
 // Login do booster
 export async function loginBooster(login, password) {
   try {
+    // Buscar booster pelo login
     const { data, error } = await supabase
       .from('boosters')
       .select('*')
       .eq('login', login)
-      .eq('password', password)
       .eq('active', true)
       .single()
 
     if (error || !data) {
+      return { success: false, error: 'Login ou senha inválidos' }
+    }
+
+    // Verificar senha (suporta plain text e hash para retrocompatibilidade)
+    const bcrypt = require('bcryptjs')
+    let passwordMatch = false
+    
+    // Se a senha no banco começa com $2, é um hash bcrypt
+    if (data.password.startsWith('$2')) {
+      passwordMatch = await bcrypt.compare(password, data.password)
+    } else {
+      // Retrocompatibilidade: aceita senha em plain text
+      passwordMatch = data.password === password
+    }
+
+    if (!passwordMatch) {
       return { success: false, error: 'Login ou senha inválidos' }
     }
 
