@@ -74,6 +74,14 @@ export default function Navbar() {
 
           <Button
             asChild
+            variant="outline"
+            className="border-primary-500/50 hover:bg-primary-500/10"
+          >
+            <Link href="/booster-login">Login Booster</Link>
+          </Button>
+
+          <Button
+            asChild
             className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold"
           >
             <Link href="/precos">Contratar Agora</Link>
@@ -128,6 +136,13 @@ export default function Navbar() {
                 </Link>
               )
             ))}
+            <Button
+              asChild
+              variant="outline"
+              className="w-full border-primary-500/50 hover:bg-primary-500/10 mb-2"
+            >
+              <Link href="/booster-login">Login Booster</Link>
+            </Button>
             <Button
               asChild
               className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold"

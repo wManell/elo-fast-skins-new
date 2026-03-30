@@ -210,6 +210,28 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Área para Boosters */}
+      <section className="container py-20">
+        <Card className="glass-card border-primary-500/20 max-w-2xl mx-auto">
+          <CardContent className="p-8 text-center space-y-6">
+            <div className="h-16 w-16 mx-auto rounded-full bg-primary-500/20 flex items-center justify-center">
+              <Shield className="h-8 w-8 text-primary-500" />
+            </div>
+            <h3 className="text-2xl font-bold">Você é um Booster?</h3>
+            <p className="text-muted-foreground">
+              Faça login para acessar seu painel e gerenciar seus pedidos
+            </p>
+            <Button
+              asChild
+              size="lg"
+              className="bg-gradient-to-r from-primary-500 to-purple-500 hover:from-primary-600 hover:to-purple-600 text-white font-bold"
+            >
+              <Link href="/booster-login">Fazer Login como Booster</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
+
       {/* CTA Final */}
       <section className="container py-20">
         <div className="relative overflow-hidden rounded-3xl">
