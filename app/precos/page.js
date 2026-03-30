@@ -1,5 +1,5 @@
 import { Sparkles, Trophy } from 'lucide-react'
-import PriceCalculator from '@/components/PriceCalculator'
+import PriceCalculatorNew from '@/components/PriceCalculatorNew'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
@@ -28,7 +28,7 @@ export default function PrecosPage() {
 
       <div className="max-w-4xl mx-auto space-y-12">
         {/* Calculadora */}
-        <PriceCalculator />
+        <PriceCalculatorNew />
 
         {/* Tipos de Serviço */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

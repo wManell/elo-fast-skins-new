@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Menu, X, Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from 'next-themes'
+import NotificationBell from '@/components/NotificationBell'
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -59,6 +60,8 @@ export default function Navbar() {
               </Link>
             )
           ))}
+          
+          <NotificationBell />
           
           <Button
             variant="ghost"
