@@ -8,15 +8,22 @@ export async function createOrder(orderData) {
   try {
     const order = {
       id: uuidv4(),
+      client_id: orderData.clientId || null,
       client_name: orderData.clientName,
       client_contact: orderData.clientContact || null,
       game: 'League of Legends',
       current_rank: orderData.currentRank,
       desired_rank: orderData.desiredRank,
       service_type: orderData.serviceType || 'solo',
+      original_price: parseFloat(orderData.originalPrice),
+      discount_code: orderData.discountCode || null,
+      discount_percentage: orderData.discountPercentage || 0,
       price: parseFloat(orderData.price),
+      final_price: parseFloat(orderData.finalPrice || orderData.price),
       booster_id: orderData.boosterId || null,
       booster_name: orderData.boosterName || null,
+      payment_status: 'pending',
+      payment_proof: null,
       status: 'pending',
       created_at: new Date().toISOString(),
     }
@@ -109,6 +116,38 @@ export async function markNotificationAsRead(notificationId) {
     return { success: true }
   } catch (error) {
     console.error('Error marking notification as read:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// Upload de comprovante de pagamento
+export async function uploadPaymentProof(orderId, proofUrl) {
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .update({ payment_proof: proofUrl })
+      .eq('id', orderId)
+
+    if (error) throw error
+    return { success: true }
+  } catch (error) {
+    console.error('Error uploading payment proof:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// Confirmar pagamento (admin)
+export async function confirmPayment(orderId) {
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .update({ payment_status: 'paid' })
+      .eq('id', orderId)
+
+    if (error) throw error
+    return { success: true }
+  } catch (error) {
+    console.error('Error confirming payment:', error)
     return { success: false, error: error.message }
   }
 }
