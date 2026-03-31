@@ -7,13 +7,12 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { UserPlus, Mail } from 'lucide-react'
-import { registerClient, verifyEmail, resendVerificationCode } from '@/app/actions/clients'
+import { UserPlus } from 'lucide-react'
+import { registerClient } from '@/app/actions/clients'
 import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 
 export default function ClientRegisterPage() {
-  const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -23,7 +22,6 @@ export default function ClientRegisterPage() {
     howFoundUs: '',
     referralCode: '',
   })
-  const [verificationCode, setVerificationCode] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
@@ -65,11 +63,15 @@ export default function ClientRegisterPage() {
     })
 
     if (result.success) {
+      // Salvar dados do usuário e redirecionar direto pro dashboard
+      localStorage.setItem('client_user', JSON.stringify(result.data))
+      
       toast({
         title: 'Conta criada!',
-        description: 'Verifique seu email para o código de ativação',
+        description: 'Bem-vindo ao EloFastSkins!',
       })
-      setStep(2)
+      
+      router.push('/client-dashboard')
     } else {
       toast({
         title: 'Erro',
@@ -79,66 +81,6 @@ export default function ClientRegisterPage() {
     }
 
     setLoading(false)
-  }
-
-  const handleSubmitVerification = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-
-    const result = await verifyEmail(formData.email, verificationCode)
-
-    if (result.success) {
-      toast({
-        title: 'Email verificado!',
-      })
-      router.push('/client-login')
-    } else {
-      toast({
-        title: 'Erro',
-        description: result.error,
-        variant: 'destructive',
-      })
-    }
-
-    setLoading(false)
-  }
-
-  if (step === 2) {
-    return (
-      <div className="container py-20">
-        <div className="max-w-md mx-auto">
-          <Card className="glass-card border-primary-500/20">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary-500/20 flex items-center justify-center">
-                <Mail className="h-8 w-8 text-primary-500" />
-              </div>
-              <CardTitle>Verifique seu Email</CardTitle>
-              <CardDescription>
-                Código enviado para {formData.email}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmitVerification} className="space-y-4">
-                <div>
-                  <Label>Código de 4 dígitos</Label>
-                  <Input
-                    type="text"
-                    maxLength={4}
-                    placeholder="1234"
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                    className="text-center text-2xl"
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading || verificationCode.length !== 4}>
-                  Verificar
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
   }
 
   return (

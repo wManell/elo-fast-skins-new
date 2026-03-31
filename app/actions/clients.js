@@ -28,11 +28,7 @@ export async function registerClient(data) {
     // Hashear senha
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Gerar código de verificação
-    const verificationCode = generateVerificationCode()
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutos
-
-    // Criar cliente
+    // Criar cliente (conta já verificada automaticamente)
     const client = {
       id: uuidv4(),
       name: name.trim(),
@@ -41,9 +37,9 @@ export async function registerClient(data) {
       password: hashedPassword,
       how_found_us: howFoundUs,
       referral_code: referralCode || null,
-      email_verified: false,
-      verification_code: verificationCode,
-      verification_code_expires: expiresAt.toISOString(),
+      email_verified: true, // Conta verificada automaticamente
+      verification_code: null,
+      verification_code_expires: null,
       first_purchase_discount_used: false,
       created_at: new Date().toISOString(),
     }
@@ -56,26 +52,16 @@ export async function registerClient(data) {
 
     if (error) throw error
 
-    // Enviar email com código de verificação
-    const { sendVerificationEmail } = await import('@/lib/email')
-    const emailResult = await sendVerificationEmail(
-      newClient.email,
-      verificationCode,
-      newClient.name
-    )
-
-    if (!emailResult.success) {
-      console.error('Erro ao enviar email:', emailResult.error)
-      // Não falha o cadastro se email não enviar
-    }
-
     return {
       success: true,
       data: {
         id: newClient.id,
+        name: newClient.name,
         email: newClient.email,
+        phone: newClient.phone,
+        firstPurchaseDiscountUsed: newClient.first_purchase_discount_used,
       },
-      message: 'Conta criada! Verifique seu email para o código de ativação.',
+      message: 'Conta criada com sucesso! Faça login para continuar.',
     }
   } catch (error) {
     console.error('Error registering client:', error)
@@ -193,10 +179,6 @@ export async function loginClient(email, password) {
 
     if (error || !client) {
       return { success: false, error: 'Email ou senha inválidos' }
-    }
-
-    if (!client.email_verified) {
-      return { success: false, error: 'Email não verificado. Verifique seu email.' }
     }
 
     const passwordMatch = await bcrypt.compare(password, client.password)
