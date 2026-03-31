@@ -56,16 +56,24 @@ export async function registerClient(data) {
 
     if (error) throw error
 
-    // TODO: Enviar email com código de verificação
-    // Por enquanto, retornar o código (em produção, enviar por email)
-    console.log(`Código de verificação para ${email}: ${verificationCode}`)
+    // Enviar email com código de verificação
+    const { sendVerificationEmail } = await import('@/lib/email')
+    const emailResult = await sendVerificationEmail(
+      newClient.email,
+      verificationCode,
+      newClient.name
+    )
+
+    if (!emailResult.success) {
+      console.error('Erro ao enviar email:', emailResult.error)
+      // Não falha o cadastro se email não enviar
+    }
 
     return {
       success: true,
       data: {
         id: newClient.id,
         email: newClient.email,
-        verificationCode, // Remover em produção
       },
       message: 'Conta criada! Verifique seu email para o código de ativação.',
     }
@@ -152,12 +160,21 @@ export async function resendVerificationCode(email) {
 
     if (updateError) throw updateError
 
-    console.log(`Novo código para ${email}: ${verificationCode}`)
+    // Enviar email com novo código
+    const { sendVerificationEmail } = await import('@/lib/email')
+    const emailResult = await sendVerificationEmail(
+      client.email,
+      verificationCode,
+      client.name
+    )
+
+    if (!emailResult.success) {
+      console.error('Erro ao enviar email:', emailResult.error)
+    }
 
     return {
       success: true,
-      verificationCode, // Remover em produção
-      message: 'Novo código enviado!',
+      message: 'Novo código enviado para seu email!',
     }
   } catch (error) {
     console.error('Error resending code:', error)

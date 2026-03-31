@@ -67,16 +67,9 @@ export default function ClientRegisterPage() {
     if (result.success) {
       toast({
         title: 'Conta criada!',
-        description: result.message,
+        description: 'Verifique seu email para o código de ativação',
       })
       setStep(2)
-      
-      if (result.verificationCode) {
-        toast({
-          title: 'Código (DEV)',
-          description: `Seu código: ${result.verificationCode}`,
-        })
-      }
     } else {
       toast({
         title: 'Erro',
