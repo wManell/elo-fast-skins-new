@@ -8,7 +8,7 @@ export const metadata = {
 
 const completedServices = [
   {
-    clientName: 'Carlos M.',
+    clientName: 'xProwlerBR',
     fromElo: 'Prata II',
     toElo: 'Ouro IV',
     completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
@@ -16,7 +16,7 @@ const completedServices = [
     boosterName: 'FoxMaster',
   },
   {
-    clientName: 'Ana S.',
+    clientName: 'MidLaneQueen',
     fromElo: 'Ouro III',
     toElo: 'Platina IV',
     completedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
@@ -24,7 +24,7 @@ const completedServices = [
     boosterName: 'BlazeFury',
   },
   {
-    clientName: 'Pedro L.',
+    clientName: 'luska',
     fromElo: 'Bronze I',
     toElo: 'Prata IV',
     completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
@@ -32,7 +32,7 @@ const completedServices = [
     boosterName: 'ShadowNinja',
   },
   {
-    clientName: 'Juliana R.',
+    clientName: 'settaodamassa',
     fromElo: 'Platina II',
     toElo: 'Esmeralda IV',
     completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
@@ -40,7 +40,7 @@ const completedServices = [
     boosterName: 'ThunderStrike',
   },
   {
-    clientName: 'Rafael K.',
+    clientName: 'NoxiianTop',
     fromElo: 'Ferro IV',
     toElo: 'Bronze II',
     completedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
@@ -48,7 +48,7 @@ const completedServices = [
     boosterName: 'PhoenixRise',
   },
   {
-    clientName: 'Mariana B.',
+    clientName: 'caiozera',
     fromElo: 'Ouro I',
     toElo: 'Platina II',
     completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
@@ -56,7 +56,7 @@ const completedServices = [
     boosterName: 'IceDragon',
   },
   {
-    clientName: 'Lucas F.',
+    clientName: 'Will',
     fromElo: 'Prata IV',
     toElo: 'Ouro II',
     completedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
@@ -64,7 +64,7 @@ const completedServices = [
     boosterName: 'FoxMaster',
   },
   {
-    clientName: 'Fernanda G.',
+    clientName: 'SupGodBR',
     fromElo: 'Esmeralda III',
     toElo: 'Diamante IV',
     completedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
@@ -72,7 +72,7 @@ const completedServices = [
     boosterName: 'BlazeFury',
   },
   {
-    clientName: 'Rodrigo T.',
+    clientName: 'ZedMainzin',
     fromElo: 'Bronze III',
     toElo: 'Prata I',
     completedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),

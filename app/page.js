@@ -136,7 +136,7 @@ export default async function HomePage() {
               <div className="h-16 w-16 mx-auto rounded-full bg-red-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <TrendingUp className="h-8 w-8 text-red-500" />
               </div>
-              <h3 className="text-2xl font-bold">MD10</h3>
+              <h3 className="text-2xl font-bold">MD5</h3>
               <p className="text-muted-foreground">
                 Garanta suas partidas de classificação com os melhores profissionais
               </p>
