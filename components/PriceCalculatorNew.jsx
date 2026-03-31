@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { TrendingUp, Zap, Star, User } from 'lucide-react'
+import { TrendingUp, Zap, Star, Gift, AlertCircle } from 'lucide-react'
 import { getActiveBoosters } from '@/app/actions/boosters'
 import { createOrder } from '@/app/actions/orders'
+import { validateDiscountCode, incrementDiscountCodeUsage, markFirstPurchaseDiscountUsed } from '@/app/actions/clients'
 import { useToast } from '@/hooks/use-toast'
+import Link from 'next/link'
 
 const eloTiers = [
   { value: 'ferro4', label: 'Ferro IV', solo: 4.25, duo: 5.95 },
@@ -50,14 +52,20 @@ export default function PriceCalculatorNew() {
   const [serviceType, setServiceType] = useState('solo')
   const [selectedBooster, setSelectedBooster] = useState(null)
   const [boosters, setBoosters] = useState([])
-  const [clientName, setClientName] = useState('')
-  const [clientContact, setClientContact] = useState('')
+  const [discountCode, setDiscountCode] = useState('')
+  const [validatedDiscount, setValidatedDiscount] = useState(null)
+  const [validatingCode, setValidatingCode] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState(null)
   const router = useRouter()
   const { toast } = useToast()
 
   useEffect(() => {
     loadBoosters()
+    const storedUser = localStorage.getItem('client_user')
+    if (storedUser) {
+      setUser(JSON.parse(storedUser))
+    }
   }, [])
 
   const loadBoosters = async () => {
@@ -83,7 +91,7 @@ export default function PriceCalculatorNew() {
     return totalPrice
   }
 
-  const calculateFinalPrice = () => {
+  const calculatePriceWithBooster = () => {
     const basePrice = calculateBasePrice()
     if (!selectedBooster) return basePrice
     
@@ -91,13 +99,65 @@ export default function PriceCalculatorNew() {
     return basePrice * modifier
   }
 
-  const price = calculateFinalPrice()
+  const getDiscountPercentage = () => {
+    let discount = 0
+    
+    // Desconto primeira compra
+    if (user && !user.firstPurchaseDiscountUsed) {
+      discount = 10
+    }
+    
+    // Código de desconto (sobrescreve se for maior)
+    if (validatedDiscount) {
+      discount = Math.max(discount, validatedDiscount.discountPercentage)
+    }
+    
+    return discount
+  }
+
+  const calculateFinalPrice = () => {
+    const priceWithBooster = calculatePriceWithBooster()
+    const discountPercentage = getDiscountPercentage()
+    
+    if (discountPercentage === 0) return priceWithBooster
+    
+    return priceWithBooster * (1 - discountPercentage / 100)
+  }
+
+  const originalPrice = calculatePriceWithBooster()
+  const discountPercentage = getDiscountPercentage()
+  const finalPrice = calculateFinalPrice()
+
+  const handleValidateCode = async () => {
+    if (!discountCode.trim()) return
+    
+    setValidatingCode(true)
+    const result = await validateDiscountCode(discountCode)
+    
+    if (result.success) {
+      setValidatedDiscount(result.data)
+      toast({
+        title: 'Código válido!',
+        description: `${result.data.discountPercentage}% de desconto aplicado`,
+      })
+    } else {
+      toast({
+        title: 'Código inválido',
+        description: result.error,
+        variant: 'destructive',
+      })
+      setValidatedDiscount(null)
+    }
+    
+    setValidatingCode(false)
+  }
 
   const handleSubmit = async () => {
-    if (!clientName.trim()) {
+    // Validações
+    if (!currentElo || !desiredElo) {
       toast({
-        title: 'Erro',
-        description: 'Por favor, informe seu nome',
+        title: 'Campos obrigatórios',
+        description: 'Selecione o elo atual e desejado',
         variant: 'destructive',
       })
       return
@@ -105,22 +165,38 @@ export default function PriceCalculatorNew() {
 
     if (!selectedBooster) {
       toast({
-        title: 'Erro',
-        description: 'Por favor, selecione um booster',
+        title: 'Selecione um booster',
+        description: 'Escolha o booster que fará seu serviço',
         variant: 'destructive',
       })
       return
     }
 
+    // Se não estiver logado, redireciona para registro
+    if (!user) {
+      toast({
+        title: 'Faça login',
+        description: 'Você precisa ter uma conta para fazer pedidos',
+      })
+      router.push('/client-register')
+      return
+    }
+
     setLoading(true)
 
+    // Criar pedido
     const orderData = {
-      clientName: clientName.trim(),
-      clientContact: clientContact.trim() || null,
+      clientId: user.id,
+      clientName: user.name,
+      clientContact: user.phone,
       currentRank: eloTiers.find(e => e.value === currentElo)?.label,
       desiredRank: eloTiers.find(e => e.value === desiredElo)?.label,
       serviceType,
-      price: price.toFixed(2),
+      originalPrice: originalPrice.toFixed(2),
+      discountCode: validatedDiscount?.code || null,
+      discountPercentage: discountPercentage,
+      price: originalPrice.toFixed(2),
+      finalPrice: finalPrice.toFixed(2),
       boosterId: selectedBooster.id,
       boosterName: selectedBooster.name,
     }
@@ -128,15 +204,25 @@ export default function PriceCalculatorNew() {
     const result = await createOrder(orderData)
 
     if (result.success) {
+      // Marcar primeira compra como usada
+      if (user && !user.firstPurchaseDiscountUsed && discountPercentage === 10) {
+        await markFirstPurchaseDiscountUsed(user.id)
+        const updatedUser = { ...user, firstPurchaseDiscountUsed: true }
+        localStorage.setItem('client_user', JSON.stringify(updatedUser))
+      }
+      
+      // Incrementar uso do código
+      if (validatedDiscount) {
+        await incrementDiscountCodeUsage(validatedDiscount.code)
+      }
+
       toast({
         title: 'Pedido criado!',
-        description: 'Redirecionando para o chat...',
+        description: 'Redirecionando para pagamento...',
       })
       
-      // Redirecionar para o chat do pedido
-      setTimeout(() => {
-        router.push(`/order/${result.data.id}`)
-      }, 1000)
+      // Redirecionar para pagamento
+      router.push(`/payment/${result.data.id}`)
     } else {
       toast({
         title: 'Erro',
@@ -160,36 +246,43 @@ export default function PriceCalculatorNew() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Informações do Cliente */}
-        <div className="space-y-4 p-4 bg-primary-500/5 border border-primary-500/20 rounded-lg">
-          <h3 className="font-semibold flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Suas Informações
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="clientName">Seu Nome *</Label>
-              <Input
-                id="clientName"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                placeholder="Como deseja ser chamado?"
-                className="bg-white/50 dark:bg-black/50"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="clientContact">Contato (Opcional)</Label>
-              <Input
-                id="clientContact"
-                value={clientContact}
-                onChange={(e) => setClientContact(e.target.value)}
-                placeholder="WhatsApp, Discord, etc"
-                className="bg-white/50 dark:bg-black/50"
-              />
-            </div>
-          </div>
-        </div>
+        {/* Aviso de Login */}
+        {!user && (
+          <Card className="bg-blue-500/10 border-blue-500/20">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">Você precisa ter uma conta!</p>
+                  <p className="text-xs text-muted-foreground">
+                    Para fazer um pedido, você precisa estar logado. Crie sua conta ou faça login.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button asChild size="sm" variant="outline">
+                      <Link href="/client-login">Fazer Login</Link>
+                    </Button>
+                    <Button asChild size="sm" className="bg-blue-500 hover:bg-blue-600">
+                      <Link href="/client-register">Criar Conta</Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
+        {/* Desconto Primeira Compra */}
+        {user && !user.firstPurchaseDiscountUsed && (
+          <Card className="bg-green-500/10 border-green-500/20">
+            <CardContent className="p-4 text-center">
+              <Gift className="h-8 w-8 mx-auto mb-2 text-green-500" />
+              <p className="font-semibold text-green-500">🎁 Você tem 10% OFF na primeira compra!</p>
+              <p className="text-xs text-muted-foreground mt-1">Desconto aplicado automaticamente</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Elo Atual */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Elo Atual</label>
           <Select value={currentElo} onValueChange={setCurrentElo}>
@@ -206,6 +299,7 @@ export default function PriceCalculatorNew() {
           </Select>
         </div>
 
+        {/* Elo Desejado */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Elo Desejado</label>
           <Select value={desiredElo} onValueChange={setDesiredElo}>
@@ -222,6 +316,7 @@ export default function PriceCalculatorNew() {
           </Select>
         </div>
 
+        {/* Tipo de Serviço */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Tipo de Serviço</label>
           <div className="grid grid-cols-2 gap-4">
@@ -288,13 +383,72 @@ export default function PriceCalculatorNew() {
           </div>
         </div>
 
-        {price > 0 && selectedBooster && (
-          <div className="bg-gradient-to-r from-primary-500/10 to-orange-500/10 border border-primary-500/20 rounded-lg p-6 text-center animate-slide-in">
-            <p className="text-sm text-muted-foreground mb-2">Preço Total</p>
-            <p className="text-4xl font-bold gamer-gradient bg-clip-text text-transparent">
-              R$ {price.toFixed(2)}
+        {/* Código de Desconto */}
+        <div className="space-y-2 border-t pt-4">
+          <Label className="flex items-center gap-2">
+            <Gift className="h-4 w-4 text-orange-500" />
+            Código de Desconto (Opcional)
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Digite o código (ex: DISCORD15)"
+              value={discountCode}
+              onChange={(e) => {
+                setDiscountCode(e.target.value.toUpperCase())
+                setValidatedDiscount(null)
+              }}
+              className="bg-white/50 dark:bg-black/50 uppercase"
+            />
+            <Button
+              onClick={handleValidateCode}
+              disabled={!discountCode.trim() || validatingCode}
+              variant="outline"
+            >
+              {validatingCode ? 'Validando...' : 'Aplicar'}
+            </Button>
+          </div>
+          {validatedDiscount && (
+            <p className="text-sm text-green-500">
+              ✅ Código válido! {validatedDiscount.discountPercentage}% de desconto
             </p>
-            <div className="flex items-center justify-center gap-2 mt-3">
+          )}
+        </div>
+
+        {/* Resumo de Preço */}
+        {originalPrice > 0 && selectedBooster && (
+          <div className="bg-gradient-to-r from-primary-500/10 to-orange-500/10 border border-primary-500/20 rounded-lg p-6 animate-slide-in">
+            <div className="space-y-3">
+              {discountPercentage > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Preço original:</span>
+                  <span className="line-through">R$ {originalPrice.toFixed(2)}</span>
+                </div>
+              )}
+              
+              {discountPercentage > 0 && (
+                <div className="flex justify-between text-sm text-green-500 font-semibold">
+                  <span>Desconto ({discountPercentage}%):</span>
+                  <span>- R$ {(originalPrice - finalPrice).toFixed(2)}</span>
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between border-t pt-3">
+                <span className="text-lg font-semibold">Preço Final:</span>
+                <div className="text-right">
+                  <p className="text-4xl font-bold gamer-gradient bg-clip-text text-transparent">
+                    R$ {finalPrice.toFixed(2)}
+                  </p>
+                  {discountPercentage > 0 && (
+                    <Badge className="mt-2 bg-green-500">
+                      <Gift className="h-3 w-3 mr-1" />
+                      Você economizou R$ {(originalPrice - finalPrice).toFixed(2)}!
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-center gap-2 mt-4">
               <Badge variant="outline">
                 {serviceType === 'duo' ? 'Duo Boost' : 'Solo Boost'}
               </Badge>
@@ -302,19 +456,30 @@ export default function PriceCalculatorNew() {
                 Booster: {selectedBooster.name}
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              ✅ Entrega em até 7 dias | 🎁 +R$100 = Coach grátis
+            
+            <p className="text-xs text-center text-muted-foreground mt-3">
+              ✅ Entrega em até 7 dias | 💬 Chat direto com o booster
             </p>
           </div>
         )}
 
+        {/* Botão */}
         <Button
-          className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold"
-          disabled={price === 0 || !selectedBooster || !clientName.trim() || loading}
+          className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold text-lg h-12"
+          disabled={originalPrice === 0 || !selectedBooster || loading || !user}
           onClick={handleSubmit}
         >
-          {loading ? 'Processando...' : 'Solicitar Boost'}
+          {loading ? 'Processando...' : user ? 'Fazer Pedido' : 'Faça Login para Continuar'}
         </Button>
+
+        {!user && (
+          <p className="text-center text-sm text-muted-foreground">
+            Não tem conta?{' '}
+            <Link href="/client-register" className="text-primary-500 hover:underline font-semibold">
+              Criar conta grátis
+            </Link>
+          </p>
+        )}
       </CardContent>
     </Card>
   )
