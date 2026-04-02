@@ -77,7 +77,7 @@ export default async function HomePage() {
 
             <div className="flex-1">
        <Image
- src="https://customer-assets.emergentagent.com/job_velocity-boost-7/artifacts/vq9n2jqi_image.png"
+ src="https://imgur.com/a/mJYRda8"
                 alt="Elo Fast Skins"
                 width={500}
                 height={500}
