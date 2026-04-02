@@ -76,8 +76,7 @@ export default async function HomePage() {
             </div>
 
             <div className="flex-1">
-              <Image
-               <Image
+           <Image
   src="/vq9n2jqi_image.png"
   alt="Elo Fast Skins"
   width={500}
