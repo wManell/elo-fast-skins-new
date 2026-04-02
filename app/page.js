@@ -77,12 +77,14 @@ export default async function HomePage() {
 
             <div className="flex-1">
               <Image
-                src="/vq9n2jqi_image.png"
-                alt="Elo Fast Skins"
-                width={500}
-                height={500}
-                className="animate-glow-pulse drop-shadow-2xl"
-                priority
+               <Image
+  src="/vq9n2jqi_image.png"
+  alt="Elo Fast Skins"
+  width={500}
+  height={500}
+  className="animate-glow-pulse drop-shadow-2xl"
+  priority
+/>
               />
             </div>
           </div>
