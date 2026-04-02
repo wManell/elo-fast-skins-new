@@ -1,16 +1,42 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, X, Moon, Sun } from 'lucide-react'
+import { Menu, X, Moon, Sun, User, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from 'next-themes'
+import { useRouter } from 'next/navigation'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import NotificationBell from '@/components/NotificationBell'
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
+  const [clientUser, setClientUser] = useState(null)
   const { theme, setTheme } = useTheme()
+  const router = useRouter()
+
+  useEffect(() => {
+    // Verificar se cliente está logado
+    const storedUser = localStorage.getItem('client_user')
+    if (storedUser) {
+      setClientUser(JSON.parse(storedUser))
+    }
+  }, [])
+
+  const handleClientLogout = () => {
+    localStorage.removeItem('client_user')
+    setClientUser(null)
+    router.push('/')
+  }
 
   const navItems = [
     { label: 'Início', href: '/' },
@@ -72,21 +98,53 @@ export default function Navbar() {
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
 
-          <Button
-            asChild
-            variant="outline"
-            className="border-blue-500/50 hover:bg-blue-500/10"
-          >
-            <Link href="/client-login">Login Cliente</Link>
-          </Button>
+          {/* Cliente Logado ou Botão de Login */}
+          {clientUser ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="border-blue-500/50 hover:bg-blue-500/10 gap-2">
+                  <User className="h-4 w-4" />
+                  {clientUser.name}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/client-dashboard" className="cursor-pointer">
+                    <User className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleClientLogout} className="text-red-600 cursor-pointer">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button
+              asChild
+              variant="outline"
+              className="border-blue-500/50 hover:bg-blue-500/10"
+            >
+              <Link href="/client-login">Login Cliente</Link>
+            </Button>
+          )}
 
-          <Button
-            asChild
-            variant="outline"
-            className="border-primary-500/50 hover:bg-primary-500/10"
-          >
-            <Link href="/booster-login">Login Booster</Link>
-          </Button>
+          {/* Ícone Booster - Pantheon */}
+          <Link href="/booster-login" className="hover:opacity-80 transition-opacity">
+            <Avatar className="h-10 w-10 border-2 border-primary-500 hover:border-orange-500 transition-all cursor-pointer">
+              <AvatarImage 
+                src="https://customer-assets.emergentagent.com/job_league-boost-hub/artifacts/vbhm79qm_ee238998055501954e9adec926d18dfd.jpg" 
+                alt="Login Booster" 
+              />
+              <AvatarFallback className="bg-gradient-to-br from-primary-500 to-orange-500 text-white text-xs">
+                🛡️
+              </AvatarFallback>
+            </Avatar>
+          </Link>
 
           <Button
             asChild
@@ -144,18 +202,64 @@ export default function Navbar() {
                 </Link>
               )
             ))}
-            <Button
-              asChild
-              variant="outline"
-              className="w-full border-primary-500/50 hover:bg-primary-500/10 mb-2"
+            
+            {/* Cliente Logado ou Login */}
+            {clientUser ? (
+              <>
+                <Link
+                  href="/client-dashboard"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-2 text-sm font-medium transition-colors hover:text-primary-500 hover:bg-primary-500/10 rounded-lg"
+                >
+                  <User className="h-4 w-4 inline mr-2" />
+                  {clientUser.name}
+                </Link>
+                <button
+                  onClick={() => {
+                    handleClientLogout()
+                    setIsOpen(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-500/10 rounded-lg"
+                >
+                  <LogOut className="h-4 w-4 inline mr-2" />
+                  Sair
+                </button>
+              </>
+            ) : (
+              <Button
+                asChild
+                variant="outline"
+                className="w-full border-blue-500/50 hover:bg-blue-500/10"
+              >
+                <Link href="/client-login" onClick={() => setIsOpen(false)}>
+                  Login Cliente
+                </Link>
+              </Button>
+            )}
+            
+            {/* Booster Login */}
+            <Link 
+              href="/booster-login" 
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 px-4 py-2 hover:bg-primary-500/10 rounded-lg transition-colors"
             >
-              <Link href="/booster-login">Login Booster</Link>
-            </Button>
+              <Avatar className="h-8 w-8 border-2 border-primary-500">
+                <AvatarImage 
+                  src="https://customer-assets.emergentagent.com/job_league-boost-hub/artifacts/vbhm79qm_ee238998055501954e9adec926d18dfd.jpg" 
+                  alt="Login Booster" 
+                />
+                <AvatarFallback className="bg-gradient-to-br from-primary-500 to-orange-500 text-white text-xs">
+                  🛡️
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium">Login Booster</span>
+            </Link>
+            
             <Button
               asChild
               className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold"
             >
-              <Link href="/precos">Contratar Agora</Link>
+              <Link href="/precos" onClick={() => setIsOpen(false)}>Contratar Agora</Link>
             </Button>
           </div>
         </div>
